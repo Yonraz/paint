@@ -10,6 +10,7 @@ const NewCanvas = (props) => {
     const canvasStack = useRef([]);
     const cursorDot = useRef(null);
     const cursorOutline = useRef(null);
+    const currentBrush = useRef(null);
     
     let currentX, currentY, prevX, prevY = 0;
 
@@ -23,6 +24,7 @@ const NewCanvas = (props) => {
     }
 
     const updateBrushMode = () => {
+        currentBrush.current = props.currentBrush;
         if (props.currentBrush === 'eraser') {
             ctx.current.globalCompositeOperation = 'destination-out';
         } else {
@@ -34,9 +36,8 @@ const NewCanvas = (props) => {
         if (canvasStack.current.length > 10) {
             canvasStack.current.shift();
         }
-        console.log(canvasRef.current)
         canvasStack.current.push(ctx.current.getImageData(0, 0, canvasRef.current.width, canvasRef.current.height));
-        console.log(canvasStack.current)
+        
     }
     const clearCanvas = () => {
         ctx.current.clearRect(0, 0, props.canvasWidth, props.canvasHeight);
@@ -47,7 +48,7 @@ const NewCanvas = (props) => {
         const canvas = canvasRef.current;
         const returnBtnElement = returnBtn.current;
         ctx.current = canvas.getContext('2d');
-        
+        currentBrush.current = props.currentBrush;
         updateCanvasStyle();
         updateCanvasStack();
         updateCursorStyle();
@@ -65,15 +66,11 @@ const NewCanvas = (props) => {
     }, [])
 
     const updateCursorStyle = () => {
-        if (props.currentBrush === 'eraser') {
-            cursorDot.current.style.backgroundColor = 'white';
-        } else {
         cursorOutline.current.style.width = `${(props.brush.size+1)/4}px`;
         cursorOutline.current.style.height = `${(props.brush.size+1)/4}px`;
         cursorDot.current.style.width = `${props.brush.size}px`;
         cursorDot.current.style.height = `${props.brush.size}px`;
         cursorDot.current.style.backgroundColor = `${props.brush.color}`;
-        }
     }
 
     // did update
@@ -90,7 +87,7 @@ const NewCanvas = (props) => {
     }, [props.clearCanvas, props.onCanvasCleared])
 
     useEffect(() => {
-        console.log(props.canvasWidth, props.canvasHeight)
+        updateCanvasStack();
     }, [props.width, props.height])
 
     useEffect(() => {
@@ -99,7 +96,6 @@ const NewCanvas = (props) => {
 
     const handleStopDraw = () => {
         updateCanvasStack();
-        console.log(canvasStack.current.length)
         if (canvasStack.current.length > 10) {
             canvasStack.current.shift();
         }
@@ -111,8 +107,8 @@ const NewCanvas = (props) => {
             const pos = getMousePos(e);
             prevX = currentX;
             prevY = currentY;
-            currentX = pos.x;
-            currentY = pos.y;
+            currentX = pos.originalX;
+            currentY = pos.originalY;
             draw();
         }
         cursorDot.current.style.top = `${e.pageY}px`;
@@ -129,11 +125,82 @@ const NewCanvas = (props) => {
         ctx.current.closePath();
     }
 
+    const hexToRgb = (hex) => {
+        // const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        const rgb = result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16),
+            a: 1
+        } : null;
+        return rgb;
+    }
+
+    const floodFill = (ctx, originalX, originalY, fillColor) => {
+        fillColor = hexToRgb(fillColor);
+        const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        const pixelStack = [[originalX, originalY]];
+        const pixelPos = (x, y) => {
+            return (y * imageData.width + x) * 4;
+        }
+        const matchStartColor = (pixelPos, startColor) => {
+            const r = imageData.data[pixelPos];
+            const g = imageData.data[pixelPos + 1];
+            const b = imageData.data[pixelPos + 2];
+            const a = imageData.data[pixelPos + 3];
+            return (r === startColor.r && g === startColor.g && b === startColor.b && a === startColor.a);
+        }
+        const colorPixel = (pixelPos, fillColor) => {
+            imageData.data[pixelPos] = fillColor.r;
+            imageData.data[pixelPos + 1] = fillColor.g;
+            imageData.data[pixelPos + 2] = fillColor.b;
+            imageData.data[pixelPos + 3] = 1;
+        }
+        const startColor = {
+            r: imageData.data[pixelPos(originalX, originalY)],
+            g: imageData.data[pixelPos(originalX, originalY) + 1],
+            b: imageData.data[pixelPos(originalX, originalY) + 2],
+            a: imageData.data[pixelPos(originalX, originalY) + 3]
+        }
+        if (startColor.r === fillColor.r && startColor.g === fillColor.g && startColor.b === fillColor.b && startColor.a === fillColor.a) {
+            return;
+        }
+        while (pixelStack.length) {
+            let [i, j] = pixelStack.pop();
+            let pixelPos = (j * imageData.width + i) * 4;
+            // check pixel in range
+            if (i < 0 || i >= canvasRef.current.width || j < 0 || j >= canvasRef.current.height) {
+                continue;
+            } else {
+                // check pixel color matches start color
+                if (!matchStartColor(pixelPos, startColor)) {
+                    continue;
+                }
+                console.log('pixel before color: ' + imageData.data[pixelPos])
+                colorPixel(pixelPos, fillColor);
+                console.log('pixel after color: ' + imageData.data[pixelPos])
+                pixelStack.push([i + 1, j]);
+                pixelStack.push([i - 1, j]);
+                pixelStack.push([i, j + 1]);
+                pixelStack.push([i, j - 1]);
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+
     const startDraw = (e) => {
-        isDrawing.current = true;
         const pos = getMousePos(e);
-        currentX = pos.x;
-        currentY = pos.y;
+        console.log(props.currentBrush)
+        if (currentBrush.current === 'fill') {
+            floodFill(ctx.current,pos.originalX, pos.originalY, props.brush.color);
+            updateCanvasStack();
+            return;
+        }
+        isDrawing.current = true;
+        currentX = pos.originalX;
+        currentY = pos.originalY;
         ctx.current.beginPath();
         ctx.current.fillRect(currentX, currentY, 2, 2);
         ctx.current.closePath();
@@ -142,8 +209,8 @@ const NewCanvas = (props) => {
     const getMousePos = (e) => {
         const rect = canvasRef.current.getBoundingClientRect();
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            originalX: e.clientX - rect.left,
+            originalY: e.clientY - rect.top
         }
     }
 
@@ -179,6 +246,5 @@ const NewCanvas = (props) => {
         </div>
         </>
     )
-
 }
 export default NewCanvas;
