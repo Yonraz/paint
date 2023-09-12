@@ -1,0 +1,69 @@
+.brushes-container {
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(223, 240, 246);
+    justify-content: center;
+    align-items: center;
+    border-radius: 3%;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 5px 5px 10px 0px rgba(0, 0, 0, 0.2);
+}
+.brushes {
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    background-color: rgba(255, 255, 255, 0.721);
+    padding: 0;
+    margin: 5px;
+    border: none;
+    font-size: 1.5rem;
+    transition: all 0.2s ease;
+    transform-origin: 50%, 50%;
+    border-radius: 2%;
+}
+
+.btn, i {
+    padding: 0.5em;
+}
+
+.eraser:hover,
+.brush:hover,
+.fill:hover {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0% {
+        transform: rotate(0deg);
+    }
+    25% {
+        transform: rotate(5deg);
+    }
+    50% {
+        transform: rotate(0deg);
+    }
+    75% {
+        transform: rotate(-2deg);
+    }
+    100% {
+        transform: rotate(0deg);
+    }
+}
+
+label {
+    padding: 0.5em;
+    margin-top: auto;
+    margin-bottom: auto;
+    font-weight: 500;
+}
+hr {
+    width: 80%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-top: 1px solid #ccc;
+}
