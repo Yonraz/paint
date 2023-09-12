@@ -4,6 +4,7 @@
 }
 
 .canvas {
+    image-rendering: pixelated;
     border: 1px solid lightblue;
     width: auto;
     height: auto;

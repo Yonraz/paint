@@ -132,7 +132,7 @@ const NewCanvas = (props) => {
             r: parseInt(result[1], 16),
             g: parseInt(result[2], 16),
             b: parseInt(result[3], 16),
-            a: 1
+            a: 255
         } : null;
         return rgb;
     }
@@ -145,6 +145,7 @@ const NewCanvas = (props) => {
             return (y * imageData.width + x) * 4;
         }
         const matchStartColor = (pixelPos, startColor) => {
+            
             const r = imageData.data[pixelPos];
             const g = imageData.data[pixelPos + 1];
             const b = imageData.data[pixelPos + 2];
@@ -155,7 +156,7 @@ const NewCanvas = (props) => {
             imageData.data[pixelPos] = fillColor.r;
             imageData.data[pixelPos + 1] = fillColor.g;
             imageData.data[pixelPos + 2] = fillColor.b;
-            imageData.data[pixelPos + 3] = 1;
+            imageData.data[pixelPos + 3] = 255;
         }
         const startColor = {
             r: imageData.data[pixelPos(originalX, originalY)],
@@ -194,7 +195,7 @@ const NewCanvas = (props) => {
         const pos = getMousePos(e);
         console.log(props.currentBrush)
         if (currentBrush.current === 'fill') {
-            floodFill(ctx.current,pos.originalX, pos.originalY, props.brush.color);
+            floodFill(ctx.current,pos.originalX, pos.originalY, ctx.current.fillStyle);
             updateCanvasStack();
             return;
         }

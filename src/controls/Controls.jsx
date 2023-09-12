@@ -58,7 +58,7 @@ const Controls = () => {
                  onCanvasCleared={handleCleared}
                  brush={{color: brushColor, size: brushSize}}/>
       <div className='brushes-section-container'>
-        <Brushes setCurrentBrush={setCurrentBrush}/>
+        <Brushes currentBrush={currentBrush} setCurrentBrush={setCurrentBrush}/>
       </div>
       <div className='color-size-container'>
         <ColorPicker sendColor={handleSendColor}/>

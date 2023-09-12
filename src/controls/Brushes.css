@@ -30,27 +30,42 @@
     padding: 0.5em;
 }
 
+.btn:hover {
+    transform: none;
+    background-color: #e6f8ff;
+    font-weight: 400;
+}
+
 .eraser:hover,
 .brush:hover,
 .fill:hover {
     animation: shake 0.5s ease-in-out;
+    transform: scale(1.05);
+}
+
+.active {
+    background-color: #e1f7ffdb;
 }
 
 @keyframes shake {
     0% {
         transform: rotate(0deg);
+        transform: scale(1);
     }
     25% {
         transform: rotate(5deg);
     }
     50% {
         transform: rotate(0deg);
+        transform: scale(1.02);
     }
     75% {
         transform: rotate(-2deg);
+        
     }
     100% {
-        transform: rotate(0deg);
+        transform: rotate(1deg);
+        transform: scale(1.05);
     }
 }
 
