@@ -70,7 +70,16 @@ const NewCanvas = (props) => {
         cursorOutline.current.style.height = `${(props.brush.size+1)/4}px`;
         cursorDot.current.style.width = `${props.brush.size}px`;
         cursorDot.current.style.height = `${props.brush.size}px`;
-        cursorDot.current.style.backgroundColor = `${props.brush.color}`;
+        if (props.currentBrush === 'eraser') {
+            cursorDot.current.style.backgroundColor = 'white';
+            cursorDot.current.style.border = '1px solid black';
+            cursorDot.current.style.borderRadius = '15%';
+
+        }else {
+            cursorDot.current.style.borderRadius = '50%';
+            cursorDot.current.style.border = 'none';
+            cursorDot.current.style.backgroundColor = `${props.brush.color}`;
+        }
     }
 
     // did update
@@ -92,6 +101,7 @@ const NewCanvas = (props) => {
 
     useEffect(() => {
         updateBrushMode();
+        updateCursorStyle();
     }, [props.currentBrush])
 
     const handleStopDraw = () => {
@@ -126,7 +136,6 @@ const NewCanvas = (props) => {
     }
 
     const hexToRgb = (hex) => {
-        // const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         const rgb = result ? {
             r: parseInt(result[1], 16),
@@ -225,7 +234,7 @@ const NewCanvas = (props) => {
     return (
         <>
         <div className="container">
-            <div className="cursor-dot"
+                <div className={currentBrush.current === 'eraser' ? 'cursor-dot eraser-cursor' : 'cursor-dot'}
             ref={cursorDot} 
             data-cursor-dot></div>
             <div className="cursor-outline"

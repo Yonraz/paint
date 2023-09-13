@@ -38,6 +38,11 @@
     transform: translate(-50%, -50%);
 }
 
+.eraser-cursor {
+    background-color: white;
+    border: 1px solid hsla(0, 0%, 36%, 0.5);
+}
+
 
 .return-btn {
     display: flex;
