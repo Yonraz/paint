@@ -50,8 +50,6 @@ const Controls = () => {
   return (
     <>
     <div className="controls">
-      {console.log('width')}
-
       <NewCanvas canvasWidth={canvasWidth} canvasHeight={canvasHeight}
                 currentBrush={currentBrush}
                 clearCanvas={clearCanvas}

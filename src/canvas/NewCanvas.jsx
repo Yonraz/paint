@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import "./Canvas.css";
 
 const NewCanvas = (props) => {
@@ -10,7 +10,8 @@ const NewCanvas = (props) => {
     const canvasStack = useRef([]);
     const cursorDot = useRef(null);
     const cursorOutline = useRef(null);
-    const currentBrush = useRef(null);
+    const [currentBrushType, setCurrentBrushType] = useState(props.currentBrush);
+    const currentBrushRef = useRef(null);
     
     let currentX, currentY, prevX, prevY = 0;
 
@@ -24,8 +25,7 @@ const NewCanvas = (props) => {
     }
 
     const updateBrushMode = () => {
-        currentBrush.current = props.currentBrush;
-        if (props.currentBrush === 'eraser') {
+        if (currentBrushType === 'eraser') {
             ctx.current.globalCompositeOperation = 'destination-out';
         } else {
             ctx.current.globalCompositeOperation = 'source-over';
@@ -48,7 +48,7 @@ const NewCanvas = (props) => {
         const canvas = canvasRef.current;
         const returnBtnElement = returnBtn.current;
         ctx.current = canvas.getContext('2d');
-        currentBrush.current = props.currentBrush;
+        currentBrushRef.current = props.currentBrush;
         updateCanvasStyle();
         updateCanvasStack();
         updateCursorStyle();
@@ -70,16 +70,9 @@ const NewCanvas = (props) => {
         cursorOutline.current.style.height = `${(props.brush.size+1)/4}px`;
         cursorDot.current.style.width = `${props.brush.size}px`;
         cursorDot.current.style.height = `${props.brush.size}px`;
-        if (props.currentBrush === 'eraser') {
-            cursorDot.current.style.backgroundColor = 'white';
-            cursorDot.current.style.border = '1px solid black';
-            cursorDot.current.style.borderRadius = '15%';
-
-        }else {
-            cursorDot.current.style.borderRadius = '50%';
-            cursorDot.current.style.border = 'none';
-            cursorDot.current.style.backgroundColor = `${props.brush.color}`;
-        }
+        cursorDot.current.style.backgroundColor = currentBrushType != 'eraser'  
+                                    ? `${props.brush.color}` 
+                                    : 'white';
     }
 
     // did update
@@ -100,11 +93,15 @@ const NewCanvas = (props) => {
     }, [props.width, props.height])
 
     useEffect(() => {
+        const newBrush = props.currentBrush;
+        currentBrushRef.current = newBrush;
+        setCurrentBrushType(newBrush);
         updateBrushMode();
         updateCursorStyle();
-    }, [props.currentBrush])
+    }, [props.currentBrush, currentBrushType])
 
     const handleStopDraw = () => {
+        console.log('brush is', props.currentBrush)
         updateCanvasStack();
         if (canvasStack.current.length > 10) {
             canvasStack.current.shift();
@@ -149,6 +146,7 @@ const NewCanvas = (props) => {
     const floodFill = (ctx, originalX, originalY, fillColor) => {
         fillColor = hexToRgb(fillColor);
         const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        console.log(imageData.data)
         const pixelStack = [[originalX, originalY]];
         const pixelPos = (x, y) => {
             return (y * imageData.width + x) * 4;
@@ -187,9 +185,7 @@ const NewCanvas = (props) => {
                 if (!matchStartColor(pixelPos, startColor)) {
                     continue;
                 }
-                console.log('pixel before color: ' + imageData.data[pixelPos])
                 colorPixel(pixelPos, fillColor);
-                console.log('pixel after color: ' + imageData.data[pixelPos])
                 pixelStack.push([i + 1, j]);
                 pixelStack.push([i - 1, j]);
                 pixelStack.push([i, j + 1]);
@@ -202,8 +198,8 @@ const NewCanvas = (props) => {
 
     const startDraw = (e) => {
         const pos = getMousePos(e);
-        console.log(props.currentBrush)
-        if (currentBrush.current === 'fill') {
+        console.log(currentBrushType)
+        if (currentBrushRef.current === 'fill') {
             floodFill(ctx.current,pos.originalX, pos.originalY, ctx.current.fillStyle);
             updateCanvasStack();
             return;
@@ -232,20 +228,23 @@ const NewCanvas = (props) => {
     }
 
     return (
+        
         <>
         <div className="container">
-                <div className={currentBrush.current === 'eraser' ? 'cursor-dot eraser-cursor' : 'cursor-dot'}
-            ref={cursorDot} 
-            data-cursor-dot></div>
+            <div className={currentBrushType === 'eraser' 
+                        ? 'cursor-dot cursor-eraser' 
+                        : 'cursor-dot'}
+                ref={cursorDot} 
+                data-cursor-dot></div>
             <div className="cursor-outline"
                 ref={cursorOutline}
                 data-cursor-outline></div>
             <canvas
-            className="canvas"
-            id="canvas"
-            ref={canvasRef}
-            width={props.canvasWidth}
-            height={props.canvasHeight}
+                className="canvas"
+                id="canvas"
+                ref={canvasRef}
+                width={props.canvasWidth}
+                height={props.canvasHeight}
             />
             <button ref={returnBtn}
                     className="return-btn">
